@@ -1,3 +1,3 @@
-mod block;
-mod chunk;
-mod region;
+pub mod block;
+pub mod chunk;
+pub mod region;
