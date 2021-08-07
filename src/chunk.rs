@@ -87,10 +87,12 @@ impl Chunk {
         let state = index as usize / (64 / bits as usize);
         let data = states[state];
         let mut d = 0;
+        let mut modified = false;
         if data < 0 {
             d = data as u64;
+            modified = true;
         }
-        let shifted_data = d as usize >> (index as usize % (64 / bits as usize) * bits as usize);
+        let shifted_data = (if modified { d as usize } else { data as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
         let palette_id = shifted_data & (2u32.pow(bits) - 1) as usize;
         let block = &palette[palette_id];
         return Block::from_palette(block);
