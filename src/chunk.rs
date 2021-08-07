@@ -66,7 +66,7 @@ impl Chunk {
             return Block::from_name(String::from("minecraft:air"));
         }
         let section = section.unwrap();
-        y %= 16;
+        y = y.rem_euclid(16);
         let block_states = if let Some(Value::LongArray(bs)) = section.get("BlockStates") {
             Some(bs)
         } else {
