@@ -25,7 +25,7 @@ impl Chunk {
         }
     }
 
-    fn get_section(self, y: i8) -> Option<HashMap<String, Value>> {
+    fn get_section(&self, y: i8) -> Option<HashMap<String, Value>> {
         if y < -4 || y > 19 {
             panic!("Y value out of range")
         }
@@ -59,8 +59,7 @@ impl Chunk {
         None
     }
 
-    pub fn get_block(self, x: i32, mut y: i32, z: i32) -> Block {
-        let self_bits = self.clone();
+    pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
             return Block::from_name(String::from("minecraft:air"));
@@ -81,7 +80,7 @@ impl Chunk {
         } else {
             panic!("Palette should be a list")
         };
-        let bits = cmp::max(self_bits.bit_length(palette.len() - 1), 4);
+        let bits = cmp::max(self.bit_length(palette.len() - 1), 4);
         let index = y * 16 * 16 + z * 16 + x;
         let states = block_states.unwrap();
         let state = index as usize / (64 / bits as usize);
@@ -98,7 +97,7 @@ impl Chunk {
         return Block::from_palette(block);
     }
 
-    fn bit_length(self, num: usize) -> u32 {
+    fn bit_length(&self, num: usize) -> u32 {
         // The number of bits that the number consists of, this is an integer and we don't care about signs or leading 0's
         // 0001 and 1 have the same return value
         // I think the lowest number that could come in is -1?

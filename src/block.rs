@@ -20,7 +20,7 @@ impl Block {
     }
 
     pub fn name(self) -> String {
-        let mut name = self.namespace.clone();
+        let mut name = self.namespace;
         name += ":";
         name += self.id.as_str();
         return name;
@@ -45,8 +45,7 @@ impl Block {
         } else {
             panic!("Palette tag missing name?")
         };
-        let n = name.clone();
-        return Block::from_name(n);
+        return Block::from_name(name.to_string());
     }
 }
 

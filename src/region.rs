@@ -23,29 +23,24 @@ impl<'a> Region<'a> {
         };
     }
 
-    fn header_offset(self, chunk_x: u32, chunk_z: u32) -> u32 {
+    fn header_offset(&self, chunk_x: u32, chunk_z: u32) -> u32 {
         return 4 * (chunk_x % 32 + chunk_z % 32 * 32);
     }
 
-    fn chunk_location(self, chunk_x: u32, chunk_z: u32) -> (u32, u32) {
-        let off_clone = self.data.clone();
-        let sec_clone = self.data.clone();
+    fn chunk_location(&self, chunk_x: u32, chunk_z: u32) -> (u32, u32) {
         let b_off = self.header_offset(chunk_x, chunk_z) as usize;
 
-        let temp_range = &off_clone[b_off..b_off + 3];
+        let temp_range = &self.data[b_off..b_off + 3];
         let temp: [u8; 3] = temp_range
             .try_into()
             .expect("Failed to convert slice into array.");
 
         let off = from_be_3_bytes(temp);
-        let sectors = sec_clone[b_off as usize + 3];
+        let sectors = self.data[b_off as usize + 3];
         return (off, sectors as u32);
     }
 
-    pub fn chunk_data(self, chunk_x: u32, chunk_z: u32) -> Option<Box<Blob>> {
-        let temp_clone = self.data.clone();
-        let comp_clone = self.data.clone();
-        let comp_type_clone = self.data.clone();
+    pub fn chunk_data(&self, chunk_x: u32, chunk_z: u32) -> Option<Box<Blob>> {
         let off = self.chunk_location(chunk_x, chunk_z);
         if off == (0, 0) {
             return None;
@@ -53,16 +48,15 @@ impl<'a> Region<'a> {
         let off: u32 = off.0 as u32 * 4096;
 
         let temp: Result<[u8; 4], TryFromSliceError> =
-            temp_clone[off as usize..off as usize + 4].try_into();
+            self.data[off as usize..off as usize + 4].try_into();
         let length = u32::from_be_bytes(temp.unwrap());
-        let compression = comp_type_clone[off as usize + 4];
+        let compression = self.data[off as usize + 4];
         if compression == 1 {
             return None;
         }
         let compressed_data: Vec<u8> =
-            comp_clone[off as usize + 5..off as usize + 5 + length as usize - 1].into();
+            self.data[off as usize + 5..off as usize + 5 + length as usize - 1].into();
         let data = Box::new(Blob::from_zlib_reader(&mut compressed_data.as_slice()).unwrap());
-        let data = data.clone();
         return Some(data);
     }
 
