@@ -15,7 +15,7 @@ impl Chunk {
         Chunk { data: level_data }
     }
 
-    pub fn from_region(region: Region, chunk_x: u32, chunk_z: u32) -> Chunk {
+    pub fn from_region(region: &Region, chunk_x: u32, chunk_z: u32) -> Chunk {
         match region.chunk_data(chunk_x, chunk_z) {
             Some(data) => {
                 let chunk = Chunk::new(data);

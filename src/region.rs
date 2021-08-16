@@ -67,7 +67,7 @@ impl<'a> Region<'a> {
         };
     }
 
-    pub fn get_chunk(self, chunk_x: u32, chunk_z: u32) -> Chunk {
+    pub fn get_chunk(&self, chunk_x: u32, chunk_z: u32) -> Chunk {
         return Chunk::from_region(self, chunk_x, chunk_z);
     }
 }
