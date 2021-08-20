@@ -26,7 +26,7 @@ impl Chunk {
     }
 
     fn get_section(&self, y: i8) -> Option<HashMap<String, Value>> {
-        if y < -4 || y > 19 {
+        if y <= -4 || y > 19 {
             panic!("Y value out of range")
         }
         let level_data = if let Value::Compound(c) = self.data.get("Level").unwrap() {
