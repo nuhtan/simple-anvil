@@ -107,7 +107,7 @@ impl Chunk {
         }
         // Convert the number to a string version of the binary representation
         // Get the number of leading 0's
-        let leading = num.leading_zeros();
+        let _leading = num.leading_zeros();
         // Place the number into binary
         let s_num = format!("{:b}", num);
         // Remove leading 0's
