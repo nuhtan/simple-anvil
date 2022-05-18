@@ -59,6 +59,46 @@ impl Chunk {
         None
     }
 
+    pub fn get_biome(&self, y: i32) -> String {
+        let sections = if let Value::List(s) = self.data.get("sections").unwrap() {
+            s
+        } else {
+            panic!("Value should be a list?")
+        };
+        for section in sections {
+            let section = if let Value::Compound(s) = section {
+                s
+            } else {
+                panic!("Should be a compound?")
+            };
+            let current_y = if let Value::Byte(val) = section.get("Y").unwrap() {
+                val
+            } else {
+                panic!("invalid height found")
+            };
+            if current_y == &(((y + 64) / 16 - 4) as i8) {
+                let biomes = if let Value::Compound(c) = section.get("biomes").unwrap() {
+                    c
+                } else {
+                    panic!("biomes not found")
+                };
+                let pallete = if let Value::List(l) = biomes.get("palette").unwrap() {
+                    l
+                } else {
+                    panic!("pallete not found")
+                };
+                let biome = if let Value::String(s) = &pallete[0] {
+                    s
+                } else {
+                    panic!("failed to get string")
+                };
+                return biome.to_string();
+            }
+            
+        };
+        return String::from("minecraft:ocean")
+    }
+
     pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
