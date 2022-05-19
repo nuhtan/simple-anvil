@@ -29,15 +29,10 @@ impl Chunk {
         if y < -4 || y > 19 {
             panic!("Y value out of range")
         }
-        let level_data = if let Value::Compound(c) = self.data.get("Level").unwrap() {
-            c
-        } else {
-            panic!("Should be a compound")
-        };
-        let sections = if let Value::List(s) = level_data.get("Sections").unwrap() {
+        let sections = if let Value::List(s) = self.data.get("sections").unwrap() {
             s
         } else {
-            panic!("Should be a list")
+            panic!("Value should be a list?")
         };
 
         for section in sections {
