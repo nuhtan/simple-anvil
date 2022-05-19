@@ -15,13 +15,13 @@ impl Chunk {
         Chunk { data: level_data }
     }
 
-    pub fn from_region(region: &Region, chunk_x: u32, chunk_z: u32) -> Chunk {
+    pub fn from_region(region: &Region, chunk_x: u32, chunk_z: u32) -> Option<Chunk> {
         match region.chunk_data(chunk_x, chunk_z) {
             Some(data) => {
                 let chunk = Chunk::new(data);
-                return chunk;
+                return Some(chunk);
             }
-            None => panic!("Got a none from chunk_data"),
+            None => None,
         }
     }
 
