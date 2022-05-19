@@ -101,7 +101,7 @@ impl Chunk {
         }
         let section = section.unwrap();
         y = y.rem_euclid(16);
-        let block_states = if let Some(Value::LongArray(bs)) = section.get("BlockStates") {
+        let block_states = if let Some(Value::Compound(bs)) = section.get("block_states") {
             Some(bs)
         } else {
             None
@@ -110,14 +110,18 @@ impl Chunk {
             return Block::from_name(String::from("minecraft:air"));
         }
 
-        let palette = if let Value::List(p) = section.get("Palette").unwrap() {
+        let palette = if let Value::List(p) = block_states.unwrap().get("palette").unwrap() {
             p
         } else {
             panic!("Palette should be a list")
         };
         let bits = cmp::max(self.bit_length(palette.len() - 1), 4);
         let index = y * 16 * 16 + z * 16 + x;
-        let states = block_states.unwrap();
+        let states = if let Value::LongArray(la) = block_states.unwrap().get("data").unwrap() {
+            la
+        } else {
+            todo!("not sure yet")
+        };
         let state = index as usize / (64 / bits as usize);
         let data = states[state];
         let mut d = 0;
