@@ -36,6 +36,49 @@ impl Chunk {
         status
     }
 
+    pub fn get_heights(&self) -> Option<Vec<i32>> {
+        if self.get_status() == "full" {
+            let height_maps = if let Value::Compound(hm) = self.data.get("Heightmaps").unwrap() {
+                hm
+            } else {
+                panic!()
+            };
+
+            let surface = if let Value::LongArray(la) = height_maps.get("WORLD_SURFACE").unwrap() {
+                la
+            } else {
+                panic!("no ocean?")
+            };
+
+            let surface_binary: Vec<String> = surface.iter().map(|n| format!("{:b}", n)).map(|n| "0".repeat(63 - n.len()) + &n).collect();
+            let mut all = Vec::new();
+            // let mut hmm = Vec::new();
+
+            for num in surface_binary {
+                let num_chars = num.chars().collect::<Vec<_>>();
+                let mut sub_nums = num_chars.chunks(9).collect::<Vec<&[char]>>();
+                sub_nums.reverse();
+                for num in sub_nums {
+                    let test = num.iter().collect::<String>();
+                    if test != "000000000" {
+                        all.push(test.clone());
+                    }
+                }
+            }
+
+            let mut heights = Vec::new();
+
+            for num in all {
+                let n = usize::from_str_radix(num.as_str(), 2).unwrap();
+                heights.push(n as i32 - 64 - 1);
+            }
+
+            return Some(heights);
+        } else {
+            None
+        }
+    }
+
     fn get_section(&self, y: i8) -> Option<HashMap<String, Value>> {
         if y < -4 || y > 19 {
             panic!("Y value out of range")
