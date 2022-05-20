@@ -7,18 +7,20 @@ use std::{cmp, collections::HashMap};
 #[derive(Clone)]
 pub struct Chunk {
     pub data: Box<Blob>,
+    pub x: u32,
+    pub z: u32
 }
 
 impl Chunk {
-    pub fn new(nbt_data: Box<Blob>) -> Chunk {
+    pub fn new(nbt_data: Box<Blob>, x: u32, z: u32) -> Chunk {
         let level_data = nbt_data;
-        Chunk { data: level_data }
+        Chunk { data: level_data, x, z }
     }
 
     pub fn from_region(region: &Region, chunk_x: u32, chunk_z: u32) -> Option<Chunk> {
         match region.chunk_data(chunk_x, chunk_z) {
             Some(data) => {
-                let chunk = Chunk::new(data);
+                let chunk = Chunk::new(data, chunk_x, chunk_z);
                 return Some(chunk);
             }
             None => None,
