@@ -115,25 +115,38 @@ impl Chunk {
         } else {
             panic!("Palette should be a list")
         };
-        let bits = cmp::max(self.bit_length(palette.len() - 1), 4);
-        let index = y * 16 * 16 + z * 16 + x;
-        let states = if let Value::LongArray(la) = block_states.unwrap().get("data").unwrap() {
-            la
-        } else {
-            todo!("not sure yet")
-        };
-        let state = index as usize / (64 / bits as usize);
-        let data = states[state];
-        let mut d = 0;
-        let mut modified = false;
-        if data < 0 {
-            d = data as u64;
-            modified = true;
+        match block_states {
+            Some(bs) => {
+                let bits = cmp::max(self.bit_length(palette.len() - 1), 4);
+                let index = y * 16 * 16 + z * 16 + x;
+                match bs.get("data") {
+                    Some(data) => {
+                        let states = if let Value::LongArray(la) = data {
+                            la
+                        } else {
+                            panic!("something here")
+                        };
+                        let state = index as usize / (64 / bits as usize);
+                        let data = states[state];
+                        let mut d = 0;
+                        let mut modified = false;
+                        if data < 0 {
+                            d = data as u64;
+                            modified = true;
+                        }
+                        let shifted_data = (if modified { d as usize } else { data as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
+                        let palette_id = shifted_data & (2u32.pow(bits) - 1) as usize;
+                        let block = &palette[palette_id];
+                        return Block::from_palette(block);
+                    },
+                    None => return Block::from_name(String::from("minecraft:air")),
+                } 
+            },
+            None => {
+                return Block::from_name(String::from("minecraft:air"));
+            },
         }
-        let shifted_data = (if modified { d as usize } else { data as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
-        let palette_id = shifted_data & (2u32.pow(bits) - 1) as usize;
-        let block = &palette[palette_id];
-        return Block::from_palette(block);
+        
     }
 
     fn bit_length(&self, num: usize) -> u32 {
