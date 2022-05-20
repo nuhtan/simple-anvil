@@ -8,7 +8,7 @@ use std::{cmp, collections::HashMap};
 pub struct Chunk {
     pub data: Box<Blob>,
     pub x: u32,
-    pub z: u32
+    pub z: u32,
 }
 
 impl Chunk {
@@ -25,6 +25,15 @@ impl Chunk {
             }
             None => None,
         }
+    }
+
+    pub fn get_status(&self) -> &String {
+        let status = if let Value::String(s) = self.data.get("Status").unwrap() {
+            s
+        } else {
+            panic!("Value should be a string?")
+        };
+        status
     }
 
     fn get_section(&self, y: i8) -> Option<HashMap<String, Value>> {
