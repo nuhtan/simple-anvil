@@ -7,7 +7,7 @@ use std::{
     cell::Cell,
     convert::TryInto,
     fs,
-    marker::{self, PhantomData},
+    marker::{self, PhantomData}, path::Path,
 };
 
 #[derive(Clone)]
@@ -64,10 +64,11 @@ impl<'a> Region<'a> {
     }
 
     pub fn from_file(file: String) -> Region<'a> {
+        let f = Path::new(&file);
         return Region {
             data: fs::read(file.clone()).unwrap(),
             _marker: PhantomData,
-            filename: file
+            filename: f.file_name().unwrap().to_str().unwrap().to_string()
         };
     }
 
