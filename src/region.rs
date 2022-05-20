@@ -14,7 +14,7 @@ use std::{
 pub struct Region<'a> {
     data: Vec<u8>,
     _marker: marker::PhantomData<Cell<&'a ()>>,
-    filename: String
+    pub filename: String
 }
 
 impl<'a> Region<'a> {
