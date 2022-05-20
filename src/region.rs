@@ -14,13 +14,15 @@ use std::{
 pub struct Region<'a> {
     data: Vec<u8>,
     _marker: marker::PhantomData<Cell<&'a ()>>,
+    filename: String
 }
 
 impl<'a> Region<'a> {
-    pub fn new(data: Vec<u8>) -> Region<'a> {
+    pub fn new(data: Vec<u8>, filename: String) -> Region<'a> {
         return Region {
             data,
             _marker: PhantomData,
+            filename
         };
     }
 
@@ -63,8 +65,9 @@ impl<'a> Region<'a> {
 
     pub fn from_file(file: String) -> Region<'a> {
         return Region {
-            data: fs::read(file).unwrap(),
+            data: fs::read(file.clone()).unwrap(),
             _marker: PhantomData,
+            filename: file
         };
     }
 
