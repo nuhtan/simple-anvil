@@ -36,7 +36,7 @@ impl Chunk {
         status
     }
 
-    pub fn get_heights(&self) -> Option<Vec<i32>> {
+    pub fn get_heights(&self, ignore_water: bool) -> Option<Vec<i32>> {
         if self.get_status() == "full" {
             let height_maps = if let Value::Compound(hm) = self.data.get("Heightmaps").unwrap() {
                 hm
@@ -44,7 +44,13 @@ impl Chunk {
                 panic!()
             };
 
-            let surface = if let Value::LongArray(la) = height_maps.get("WORLD_SURFACE").unwrap() {
+            let map = if ignore_water {
+                "OCEAN_FLOOR"
+            } else {
+                "WORLD_SURFACE"
+            };
+
+            let surface = if let Value::LongArray(la) = height_maps.get(map).unwrap() {
                 la
             } else {
                 panic!("no ocean?")
