@@ -7,29 +7,38 @@ use std::{
     cell::Cell,
     convert::TryInto,
     fs,
-    marker::{self, PhantomData}, path::Path,
+    marker::{self, PhantomData},
+    path::Path,
 };
 
+/// Low level storage of region file contents.
 #[derive(Clone)]
 pub struct Region<'a> {
+    /// Vector containing all of the data in bytes.
     data: Vec<u8>,
+    /// I don't remember what this was for.
     _marker: marker::PhantomData<Cell<&'a ()>>,
-    pub filename: String
+    /// The name of the file that the region was derived from.
+    pub filename: String,
 }
 
 impl<'a> Region<'a> {
-    pub fn new(data: Vec<u8>, filename: String) -> Region<'a> {
-        return Region {
-            data,
-            _marker: PhantomData,
-            filename
-        };
-    }
-
+    /// Returns the header size and returns an offset for a particular chunk.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `chunk_x` - The x coordinate of the particular chunk
+    /// * `chunk_z` - The z coordinate of the particular chunk
     fn header_offset(&self, chunk_x: u32, chunk_z: u32) -> u32 {
         return 4 * (chunk_x % 32 + chunk_z % 32 * 32);
     }
 
+    /// Returns the location where a particular chunk is found.
+    ///
+    /// # Arguments
+    /// 
+    /// * `chunk_x` - The x coordinate of the particular chunk
+    /// * `chunk_z` - The z coordinate of the particular chunk
     fn chunk_location(&self, chunk_x: u32, chunk_z: u32) -> (u32, u32) {
         let b_off = self.header_offset(chunk_x, chunk_z) as usize;
 
@@ -43,6 +52,12 @@ impl<'a> Region<'a> {
         return (off, sectors as u32);
     }
 
+    /// Returns a Blob of all the data for a particular chunk. 
+    /// 
+    /// # Arguments
+    /// 
+    /// * `chunk_x` - The x coordinate of the particular chunk
+    /// * `chunk_z` - The z coordinate of the particular chunk
     pub fn chunk_data(&self, chunk_x: u32, chunk_z: u32) -> Option<Box<Blob>> {
         let off = self.chunk_location(chunk_x, chunk_z);
         if off == (0, 0) {
@@ -63,20 +78,53 @@ impl<'a> Region<'a> {
         return Some(data);
     }
 
+    /// Returns a region using a region(.mca) file
+    /// 
+    /// # Arguments
+    /// 
+    /// * `file` - The file name and relative path of the region file.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// 
+    /// let region = Region::from_file("r.0.0.mca".into());
+    /// ```
     pub fn from_file(file: String) -> Region<'a> {
         let f = Path::new(&file);
         return Region {
             data: fs::read(file.clone()).unwrap(),
             _marker: PhantomData,
-            filename: f.file_name().unwrap().to_str().unwrap().to_string()
+            filename: f.file_name().unwrap().to_str().unwrap().to_string(),
         };
     }
 
+    /// Returns a Chunk contained within the Region. A region file contains 32x32 chunks.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `chunk_x` - The x coordinate of the particular chunk
+    /// * `chunk_z` - The z coordinate of the particular chunk
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// 
+    /// let region = Region::from_file("r.0.0.mca".into());
+    /// let chunk = region.get_chunk(11, 2).unwrap();
+    /// ```
     pub fn get_chunk(&self, chunk_x: u32, chunk_z: u32) -> Option<Chunk> {
         return Chunk::from_region(self, chunk_x, chunk_z);
     }
 }
 
+/// Returns an unsigned int from three bytes. This might not be needed anymore.
+/// 
+/// # Arguments
+/// 
+/// * `bytes` - The bytes to be converted into u32
 fn from_be_3_bytes(bytes: [u8; 3]) -> u32 {
     let mut temp: [u8; 4] = [0; 4];
     for n in 0..bytes.len() {

@@ -4,29 +4,47 @@ use crate::{block::Block, region::Region};
 
 use std::{cmp, collections::HashMap};
 
+/// A simple representation of a Minecraft Chunk
 #[derive(Clone)]
 pub struct Chunk {
+    /// All of the chunk data
     pub data: Box<Blob>,
+    /// The region x
     pub x: u32,
+    /// The region z
     pub z: u32,
 }
 
 impl Chunk {
-    pub fn new(nbt_data: Box<Blob>, x: u32, z: u32) -> Chunk {
-        let level_data = nbt_data;
-        Chunk { data: level_data, x, z }
-    }
-
+    
+    /// Returns the chunk at an x,z coordinate within a Region.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `region` - The Region from which to get the Chunk
+    /// * `chunk_x` - The x coordinate within the Region of the Chunk
+    /// * `chunk_z` - The z coordinate within the Region of the Chunk
     pub fn from_region(region: &Region, chunk_x: u32, chunk_z: u32) -> Option<Chunk> {
         match region.chunk_data(chunk_x, chunk_z) {
             Some(data) => {
-                let chunk = Chunk::new(data, chunk_x, chunk_z);
-                return Some(chunk);
+                return Some(Chunk{ data, x: chunk_x, z: chunk_z });
             }
             None => None,
         }
     }
 
+    /// Returns a string representing the current generation state of the Chunk. 'full' is completely generated.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// if chunk.get_status() == "full" {
+    ///     println!("Fully Generated!");
+    /// }
+    /// ```
     pub fn get_status(&self) -> &String {
         let status = if let Value::String(s) = self.data.get("Status").unwrap() {
             s
@@ -36,7 +54,21 @@ impl Chunk {
         status
     }
 
-    pub fn get_heights(&self, ignore_water: bool) -> Option<Vec<i32>> {
+    /// Returns a heightmap of the Chunk. If the Chunk is not fully generated then a None is returned.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `ignore_water` - Determines which heightmap to return, if true then a heightmap that does not take into account the water is returned (OCEAN_FLOOR), if false then the water is accounted for (WORLD_SURFACE).
+    /// 
+    ///  # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// let heightmap = chunk.get_heightmap(false);
+    /// ```
+    pub fn get_heightmap(&self, ignore_water: bool) -> Option<Vec<i32>> {
         if self.get_status() == "full" {
             let height_maps = if let Value::Compound(hm) = self.data.get("Heightmaps").unwrap() {
                 hm
@@ -85,6 +117,11 @@ impl Chunk {
         }
     }
 
+    /// Returns a vertical section of a Chunk
+    /// 
+    /// # Arguments
+    /// 
+    /// * `y` - The y index of the section.
     fn get_section(&self, y: i8) -> Option<HashMap<String, Value>> {
         if y < -4 || y > 19 {
             panic!("Y value out of range")
@@ -114,6 +151,34 @@ impl Chunk {
         None
     }
 
+    /// Returns the String representation of the biome for a Chunk. Chunks can have different biomes at different vertical sections so use a heightmap to determine the top section if you only want the surface biome.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `y` - The y section of the chunk to get the biome of.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// let heightmap = chunk.get_heightmap(false);
+    /// let y = if let Some(heights) = heightmap {
+    ///     heights.get(0).unwrap()
+    /// } else {
+    ///     panic!("Chunk not fully generated");
+    /// }
+    /// let section_y = ((y + 64) / 16 - 4) as i8
+    /// let biome = chunk.get_biome(section_y);
+    /// ```
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// let biome = chunk.get_biome(-3);
+    /// ```
     pub fn get_biome(&self, y: i32) -> String {
         let sections = if let Value::List(s) = self.data.get("sections").unwrap() {
             s
@@ -154,6 +219,17 @@ impl Chunk {
         return String::from("minecraft:ocean")
     }
 
+    /// Returns the block at a particular x, y, z coordinate within a chunk. x and z should be the coordinates within the Chunk (0-15).
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// let block = chunk.get_block(5, -12, 11);
+    /// println!("{}", block.id);
+    /// ```
     pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
@@ -209,6 +285,7 @@ impl Chunk {
         
     }
 
+    /// Returns the bitlength of a usize value
     fn bit_length(&self, num: usize) -> u32 {
         // The number of bits that the number consists of, this is an integer and we don't care about signs or leading 0's
         // 0001 and 1 have the same return value
