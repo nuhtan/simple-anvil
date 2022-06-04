@@ -233,7 +233,7 @@ impl Chunk {
     pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 512 + x, y, self.z as i32 * 512 + z)));
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
         }
         let section = section.unwrap();
         y = y.rem_euclid(16);
@@ -243,7 +243,7 @@ impl Chunk {
             None
         };
         if block_states == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 512 + x, y, self.z as i32 * 512 + z)));
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
         }
 
         let palette = if let Value::List(p) = block_states.unwrap().get("palette").unwrap() {
@@ -273,13 +273,13 @@ impl Chunk {
                         let shifted_data = (if modified { d as usize } else { data as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
                         let palette_id = shifted_data & (2u32.pow(bits) - 1) as usize;
                         let block = &palette[palette_id];
-                        return Block::from_palette(block, Some((self.x as i32 * 512 + x, y, self.z as i32 * 512 + z)));
+                        return Block::from_palette(block, Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
                     },
-                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 512 + x, y, self.z as i32 * 512 + z)))
+                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)))
                 } 
             },
             None => {
-                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 512 + x, y, self.z as i32 * 512 + z)));
+                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
             },
         }
         

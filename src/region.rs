@@ -119,14 +119,29 @@ impl<'a> Region<'a> {
         return Chunk::from_region(self, chunk_x, chunk_z);
     }
 
-
+    /// Returns a Block contained within the Region. None is returned if the Chunk the Block would exist in is not fully generated.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `x` - The x coordinate of the block
+    /// * `y` - The x coordinate of the block
+    /// * `z` - The x coordinate of the block
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// 
+    /// let region = Region::from_file("r.0.0.mca".into());
+    /// println!("{}", region.get_block(20, 56, 45).unwrap().id);
+    /// ```
     pub fn get_block(&self, x: i32, y: i32, z: i32) -> Option<Block> {
-        let chunk = self.get_chunk((x / 32) as u32, (z / 32) as u32);
-        return match chunk {
-            Some(c) => {
-                Some(c.get_block(x % 32, y, z % 32))
+        let chunk = self.get_chunk((x / 32) as u32, (z / 32) as u32).unwrap();
+        return match chunk.get_status().as_str() {
+            "full" => {
+                Some(chunk.get_block(x % 32, y, z % 32))
             },
-            None => None,
+            _ => None,
         }
     }
 }

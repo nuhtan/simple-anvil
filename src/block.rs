@@ -87,7 +87,6 @@ impl Block {
     /// # Arguments
     /// * `tag` - The page representing the palette from a Chunk.
     /// * `coords` - The coordinates of the block, None if not included.
-    ///
     /// * `tag` - The value for the block from a chunk. This should be a HashMap containing all of the contents of the block.
     pub fn from_palette(tag: &Value, coords: Option<(i32, i32, i32)>) -> Block {
         let tag = if let Value::Compound(t) = tag {
