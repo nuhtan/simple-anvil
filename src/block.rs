@@ -10,7 +10,7 @@ pub struct Block {
     namespace: String,
     /// The general name of a block, ie. 'stone'
     pub id: String,
-    /// The x coordinate of the block
+    /// The coordinates of the block, None if not included.
     pub coords: Option<(i32, i32, i32)>
 }
 
@@ -30,14 +30,14 @@ impl Block {
     /// let block = Block::new("minecraft".into(), Some("stone".into()));
     /// println!("{}", block.id);
     /// ```
-    pub fn new(namespace: String, block_id: Option<String>) -> Block {
+    pub fn new(namespace: String, block_id: Option<String>, coords: Option<(i32, i32, i32)>) -> Block {
         match block_id {
-            Some(id) => return Block { namespace, id, coords: None },
+            Some(id) => return Block { namespace, id, coords },
             None => {
                 return Block {
                     namespace: namespace.clone(),
                     id: namespace,
-                    coords: None
+                    coords
                 };
             }
         }
@@ -64,6 +64,7 @@ impl Block {
     /// # Arguments
     ///
     /// * `name` - The fullname of the block, this includes the namespace and the colon.
+    /// * `coords` - The coordinates of the block, None if not included.
     ///  
     /// # Examples
     ///
@@ -84,6 +85,8 @@ impl Block {
     /// Returns a block from a Chunk palette value
     ///
     /// # Arguments
+    /// * `tag` - The page representing the palette from a Chunk.
+    /// * `coords` - The coordinates of the block, None if not included.
     ///
     /// * `tag` - The value for the block from a chunk. This should be a HashMap containing all of the contents of the block.
     pub fn from_palette(tag: &Value, coords: Option<(i32, i32, i32)>) -> Block {
@@ -97,7 +100,7 @@ impl Block {
         } else {
             panic!("Palette tag missing name?")
         };
-        return Block::from_name(name.to_string(), None);
+        return Block::from_name(name.to_string(), coords);
     }
 }
 
