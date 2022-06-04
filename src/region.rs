@@ -1,6 +1,6 @@
 use nbt::Blob;
 
-use crate::chunk::Chunk;
+use crate::{chunk::Chunk, block::Block};
 
 use std::{
     array::TryFromSliceError,
@@ -117,6 +117,17 @@ impl<'a> Region<'a> {
     /// ```
     pub fn get_chunk(&self, chunk_x: u32, chunk_z: u32) -> Option<Chunk> {
         return Chunk::from_region(self, chunk_x, chunk_z);
+    }
+
+
+    pub fn get_block(&self, x: i32, y: i32, z: i32) -> Option<Block> {
+        let chunk = self.get_chunk((x / 32) as u32, (z / 32) as u32);
+        return match chunk {
+            Some(c) => {
+                Some(c.get_block(x % 32, y, z % 32))
+            },
+            None => None,
+        }
     }
 }
 
