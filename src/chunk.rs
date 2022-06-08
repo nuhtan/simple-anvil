@@ -233,7 +233,7 @@ impl Chunk {
     pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
         }
         let section = section.unwrap();
         y = y.rem_euclid(16);
@@ -243,7 +243,7 @@ impl Chunk {
             None
         };
         if block_states == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
         }
 
         let palette = if let Value::List(p) = block_states.unwrap().get("palette").unwrap() {
@@ -251,6 +251,7 @@ impl Chunk {
         } else {
             panic!("Palette should be a list")
         };
+
         match block_states {
             Some(bs) => {
                 let bits = cmp::max(self.bit_length(palette.len() - 1), 4);
@@ -273,13 +274,34 @@ impl Chunk {
                         let shifted_data = (if modified { d as usize } else { data as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
                         let palette_id = shifted_data & (2u32.pow(bits) - 1) as usize;
                         let block = &palette[palette_id];
-                        return Block::from_palette(block, Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
+                        // let props = 
+                        let props = if let Value::Compound(c) = block {
+                            match c.get("Properties") {
+                                Some(p_val) => {
+                                    let properties = if let Value::Compound(p) = p_val {
+                                        p
+                                    } else {
+                                        panic!("Properties should be a compound")
+                                    };
+                                    Some(properties.iter().map(|f| (f.0.to_owned(), if let Value::String(s) = f.1 {
+                                        s.to_owned()
+                                    } else {
+                                        panic!("Should be a string?")
+                                    })).collect::<Vec<_>>())
+  
+                                },
+                                None => None,
+                            }
+                        } else {
+                            panic!("block should be a compound")
+                        };
+                        return Block::from_palette(block, Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), props);
                     },
-                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)))
+                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None)
                 } 
             },
             None => {
-                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)));
+                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
             },
         }
         

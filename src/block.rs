@@ -11,7 +11,9 @@ pub struct Block {
     /// The general name of a block, ie. 'stone'
     pub id: String,
     /// The coordinates of the block, None if not included.
-    pub coords: Option<(i32, i32, i32)>
+    pub coords: Option<(i32, i32, i32)>,
+    /// Any properties that a block might have.
+    pub properties: Option<Vec<(String, String)>>
 }
 
 impl Block {
@@ -30,14 +32,15 @@ impl Block {
     /// let block = Block::new("minecraft".into(), Some("stone".into()));
     /// println!("{}", block.id);
     /// ```
-    pub fn new(namespace: String, block_id: Option<String>, coords: Option<(i32, i32, i32)>) -> Block {
+    pub fn new(namespace: String, block_id: Option<String>, coords: Option<(i32, i32, i32)>, properties: Option<Vec<(String, String)>>) -> Block {
         match block_id {
-            Some(id) => return Block { namespace, id, coords },
+            Some(id) => return Block { namespace, id, coords, properties },
             None => {
                 return Block {
                     namespace: namespace.clone(),
                     id: namespace,
-                    coords
+                    coords,
+                    properties
                 };
             }
         }
@@ -73,12 +76,13 @@ impl Block {
     /// let block = Block::from_name("minecraft:stone".into());
     /// println!("{}", block.id);
     /// ```
-    pub fn from_name(name: String, coords: Option<(i32, i32, i32)>) -> Block {
+    pub fn from_name(name: String, coords: Option<(i32, i32, i32)>, properties: Option<Vec<(String, String)>>) -> Block {
         let temp: Vec<&str> = name.split(":").collect();
         return Block {
             namespace: temp[0].to_owned(),
             id: temp[1].to_owned(),
-            coords
+            coords,
+            properties
         };
     }
 
@@ -88,7 +92,7 @@ impl Block {
     /// * `tag` - The page representing the palette from a Chunk.
     /// * `coords` - The coordinates of the block, None if not included.
     /// * `tag` - The value for the block from a chunk. This should be a HashMap containing all of the contents of the block.
-    pub fn from_palette(tag: &Value, coords: Option<(i32, i32, i32)>) -> Block {
+    pub fn from_palette(tag: &Value, coords: Option<(i32, i32, i32)>, properties: Option<Vec<(String, String)>>) -> Block {
         let tag = if let Value::Compound(t) = tag {
             t
         } else {
@@ -99,7 +103,7 @@ impl Block {
         } else {
             panic!("Palette tag missing name?")
         };
-        return Block::from_name(name.to_string(), coords);
+        return Block::from_name(name.to_string(), coords, properties);
     }
 }
 
