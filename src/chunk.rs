@@ -46,12 +46,29 @@ impl Chunk {
     /// }
     /// ```
     pub fn get_status(&self) -> &String {
-        let status = if let Value::String(s) = self.data.get("Status").unwrap() {
+        if let Value::String(s) = self.data.get("Status").unwrap() {
             s
         } else {
             panic!("Value should be a string?")
-        };
-        status
+        }
+    }
+
+    /// Returns an i64 (equivalent of Java long) of the last tick at which the chunk updated.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust,no_run
+    /// use simple_anvil::region::Region;
+    /// let region = Region::from_file("r.0.0.mca");
+    /// let chunk = region.get_chunk(0, 0).unwrap();
+    /// println!("{}", chunk.get_last_update());
+    /// ```
+    pub fn get_last_update(&self) -> &i64 {
+        if let Value::Long(l) = self.data.get("LastUpdate").unwrap() {
+            l
+        } else {
+            panic!("Value should be a i64")
+        }
     }
 
     /// Returns a heightmap of the Chunk. If the Chunk is not fully generated then a None is returned.
