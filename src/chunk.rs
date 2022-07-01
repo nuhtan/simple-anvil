@@ -250,17 +250,43 @@ impl Chunk {
     pub fn get_block(&self, x: i32, mut y: i32, z: i32) -> Block {
         let section = self.get_section(((y + 64) / 16 - 4) as i8);
         if section == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z), ), None, String::new());
         }
         let section = section.unwrap();
         y = y.rem_euclid(16);
+        let biomes = if let Some(Value::Compound(b)) = section.get("biomes") {
+            b
+        } else {
+            panic!("no biome?")
+        };
+        let dat = if let Value::LongArray(la) = biomes.get("data").unwrap() {
+            la
+        } else {
+            panic!("naw?")
+        };
+        let index = y * 16 * 16 + z * 16 + x;
+        let pal = if let Value::List(l) = biomes.get("palette").unwrap() {
+            l
+        } else {
+            panic!("naw2")
+        };
+        let bits = self.bit_length(pal.len() - 1);
+        let ds = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
+        let hmm = ds & (2u32.pow(bits as u32) - 1) as usize;
+        let biome = if let Value::String(s) = pal[hmm].to_owned() {
+            s
+        } else {
+            panic!("hah")
+        };
+        
+        
         let block_states = if let Some(Value::Compound(bs)) = section.get("block_states") {
             Some(bs)
         } else {
             None
         };
         if block_states == None {
-            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
+            return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None, biome);
         }
 
         let palette = if let Value::List(p) = block_states.unwrap().get("palette").unwrap() {
@@ -312,13 +338,13 @@ impl Chunk {
                         } else {
                             panic!("block should be a compound")
                         };
-                        return Block::from_palette(block, Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), props);
+                        return Block::from_palette(block, Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), props, biome);
                     },
-                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None)
+                    None => return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None, biome)
                 } 
             },
             None => {
-                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None);
+                return Block::from_name(String::from("minecraft:air"), Some((self.x as i32 * 32 + x, y, self.z as i32 * 32 + z)), None, biome);
             },
         }
         
