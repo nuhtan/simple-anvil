@@ -259,25 +259,53 @@ impl Chunk {
         } else {
             panic!("no biome?")
         };
-        let dat = if let Value::LongArray(la) = biomes.get("data").unwrap() {
-            la
-        } else {
-            panic!("naw?")
-        };
-        let index = y * 16 * 16 + z * 16 + x;
         let pal = if let Value::List(l) = biomes.get("palette").unwrap() {
             l
         } else {
             panic!("naw2")
         };
-        let bits = self.bit_length(pal.len() - 1);
-        let ds = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
-        let hmm = ds & (2u32.pow(bits as u32) - 1) as usize;
-        let biome = if let Value::String(s) = pal[hmm].to_owned() {
-            s
-        } else {
-            panic!("hah")
+        let data_exists = biomes.get("data");
+        let biome = match data_exists {
+            Some(dat) => {
+                let dat = if let Value::LongArray(la) = dat {
+                    la
+                } else {
+                    panic!("naw?")
+                };
+                let index = y * 16 * 16 + z * 16 + x;
+                let bits = self.bit_length(pal.len() - 1);
+                let dat_shifted = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
+                let pal_id = dat_shifted & (2u32.pow(bits as u32) - 1) as usize;
+                if let Value::String(s) = pal[pal_id].to_owned() {
+                    s
+                } else {
+                    panic!("hah")
+                }
+            },
+            None => {
+                pal[0].to_string()
+            },
         };
+
+        // let dat = if let Value::LongArray(la) = biomes.get("data").unwrap() {
+        //     la
+        // } else {
+        //     panic!("naw?")
+        // };
+        // let index = y * 16 * 16 + z * 16 + x;
+        // let pal = if let Value::List(l) = biomes.get("palette").unwrap() {
+        //     l
+        // } else {
+        //     panic!("naw2")
+        // };
+        // let bits = self.bit_length(pal.len() - 1);
+        // let ds = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
+        // let hmm = ds & (2u32.pow(bits as u32) - 1) as usize;
+        // let biome = if let Value::String(s) = pal[hmm].to_owned() {
+        //     s
+        // } else {
+        //     panic!("hah")
+        // };
         
         
         let block_states = if let Some(Value::Compound(bs)) = section.get("block_states") {
