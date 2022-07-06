@@ -272,41 +272,70 @@ impl Chunk {
                 } else {
                     panic!("naw?")
                 };
-                let index = y * 16 * 16 + z * 16 + x;
+                let dat = dat[0];
+                let index = ((y % 16 / 4) * 16) + (z / 4) * 4 + (x / 4);
                 let bits = self.bit_length(pal.len() - 1);
-                let dat_shifted = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
-                let pal_id = dat_shifted & (2u32.pow(bits as u32) - 1) as usize;
-                if let Value::String(s) = pal[pal_id].to_owned() {
+                let shifted_dat = dat >> ((bits as i32 * index) % 64);
+                if 64 - ((bits as i32 * index) % 64) < bits as i32 {
+                    todo!("I skipped this for now as it seemed a bit more tedious")
+                }
+                let pal_id = shifted_dat & ((2u32.pow(bits) - 1) as i64);
+                if let Value::String(s) = pal[pal_id as usize].to_owned() {
                     s
                 } else {
                     panic!("hah")
                 }
+                // let bits = self.bit_length(pal.len() - 1); //cmp::max(self.bit_length(pal.len() - 1), 4);
+                // let index = y * 16 * 16 + z * 16 + x;
+                // let mut d = 0;
+                // let mut modified = false;
+                // if dat < 0 {
+                //     d = dat as u64;
+                //     modified = true;
+                // }
+                // let shifted_dat = (if modified { d as usize } else { dat as usize }) >> (index as usize % (64 / bits as usize) * bits as usize);
+                // let pal_id = shifted_dat & (2u32.pow(bits) - 1) as usize;
+                // println!("x: {}, z: {}, index: {}, {}", x, z, index % 32, pal_id);
+                // if let Value::String(s) = pal[pal_id].to_owned() {
+                //     s
+                // } else {
+                //     panic!("hah")
+                // }
+                // String::from("huh")
+                // let index = 128 * ((y + 64) % 16) + 16 * z + x;
+                // let index1 = (y * 16 * 16 + z * 16 + x) / 64;
+                // let index2 = (y * 16 * 16 + z * 16 + x) % 64;
+                // // println!("{} | {}", index1, index2);
+                // let options = format!("{:b}", dat[0]);
+                // // println!("{}", options);
+                // let chars: Vec<_> = options.chars().collect();
+                // let bits = self.bit_length(pal.len() - 1);
+                // let shifted = dat[0] >> ((128 * y + 16 * z + x) as usize % (64 / bits as usize)) as i64;
+                // let chars2: Vec<_> = format!("{:b}", shifted).chars().collect();
+                // let shifty = dat[0] >> index1;
+                // let shifty_chars = format!("{:b}", shifty).chars().collect::<Vec<char>>();
+                // println!("{}, {}", shifty_chars[index1 as usize], shifty_chars[shifty_chars.len() - 1 - index1 as usize]);
+                // println!("{}, {}", chars[options.len() - (index % 64) as usize - 1], chars2[options.len() - (index % 64) as usize - 1]);
+                // println!("{:b}", dat[0]);
+                // let index = z * 16 + x;
+                
+                
+                // println!("{:b}", shifted);
+                // let dat_shifted = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
+                // // println!("{:b}", dat_shifted);
+                // // let pal_id2 = shifted & (2u32.pow(bits as u32) - 1) as i64;
+                // let pal_id = dat_shifted & (2u32.pow(bits as u32) - 1) as usize;
+                // // println!("index: {}, data: {}, data_shifted: {}, bits: {}, id: {}, id2: {}", index, dat[0], dat_shifted, bits, pal_id, pal_id2);
+                // if let Value::String(s) = pal[pal_id].to_owned() {
+                //     s
+                // } else {
+                //     panic!("hah")
+                // }
             },
             None => {
                 pal[0].to_string()
             },
         };
-
-        // let dat = if let Value::LongArray(la) = biomes.get("data").unwrap() {
-        //     la
-        // } else {
-        //     panic!("naw?")
-        // };
-        // let index = y * 16 * 16 + z * 16 + x;
-        // let pal = if let Value::List(l) = biomes.get("palette").unwrap() {
-        //     l
-        // } else {
-        //     panic!("naw2")
-        // };
-        // let bits = self.bit_length(pal.len() - 1);
-        // let ds = (dat[0] as usize) >> (index as usize % (64 / bits as usize) * bits as usize);
-        // let hmm = ds & (2u32.pow(bits as u32) - 1) as usize;
-        // let biome = if let Value::String(s) = pal[hmm].to_owned() {
-        //     s
-        // } else {
-        //     panic!("hah")
-        // };
-        
         
         let block_states = if let Some(Value::Compound(bs)) = section.get("block_states") {
             Some(bs)
@@ -397,5 +426,13 @@ impl Chunk {
         // Return the length
         // Leading zeros appear to be removed when changed to bits
         return s_num.len() as u32;
+    }
+
+    fn bin_append(self, a: u32, b: u32, length: Option<u32>) -> u32 {
+        let length = match length {
+            Some(l) => l,
+            None => self.bit_length(b as usize),
+        };
+        return (a << length) | b
     }
 }
