@@ -9,5 +9,9 @@ repository = "https://github.com/nuhtan/simple-anvil"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "simple-anvil-bin"
+path = "src/bin.rs"
+
 [dependencies]
 hematite-nbt = "0.5.2"
